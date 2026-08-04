@@ -1,0 +1,60 @@
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile the Python drivers
+        run: python -m compileall -q vm
+      - name: Check the shell scripts parse
+        run: for f in vm/*.sh; do bash -n "$f"; done
+      - name: Shellcheck
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq shellcheck
+          shellcheck -S warning vm/*.sh
+      - name: Every HolyC source is referenced somewhere
+        run: |
+          status=0
+          for f in holyc/*.HC; do
+            name=$(basename "$f" .HC)
+            grep -rq "$name" --include="*.md" --include="*.sh" --include="*.py" . ||
+              { echo "holyc/$name.HC is not referenced by any doc or script"; status=1; }
+          done
+          exit $status
+
+  # The full loop: install TempleOS unattended, then check that a draw lands on
+  # the citation it claims and that RDRAND is live. No /dev/kvm on hosted
+  # runners, so QEMU emulates in software -- slow but sufficient.
+  vm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install TempleOS and the oracle
+        working-directory: vm
+        run: ./install.sh
+      - name: Verify
+        working-directory: vm
+        run: ./test.sh
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: vm/shots/*.png
+          if-no-files-found: ignore

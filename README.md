@@ -47,24 +47,48 @@ still a disciplined instrument for reflection: it makes you state the question,
 confronts you with a text you did not choose, and holds you to what you claimed
 it meant.
 
-## Using it
+## Install
+
+Needs Linux, Python 3, and about 2 GB of disk. QEMU is installed for you.
+No `/dev/kvm` required — TempleOS is small enough to emulate in software.
 
 ```sh
-cd vm
-./setup.sh          # host deps, ISO, disk; then the one-time interactive install
-./tos.py boot       # start the installed system
-./tos.py key 1      # boot loader -> Drive C
+git clone https://github.com/ninjahawk/templeOS
+cd templeOS/vm
+./install.sh        # ~8 min: deps, ISO, disk, unattended TempleOS install, HolyC
+./test.sh           # verifies citations and that the entropy source is live
+```
+
+`install.sh` is unattended. TempleOS has no silent install mode, so it answers
+the prompts by keystroke, waiting for the framebuffer to stop changing between
+each one rather than sleeping for a guessed duration.
+
+## Consult
+
+```sh
+./tos.py boot ; ./tos.py waitidle ; ./tos.py key 1 ; ./tos.py waitidle
 
 ./tos.py type '#include "::/Home/U"';    ./tos.py key ret
 ./tos.py type '#include "::/Home/Urim"'; ./tos.py key ret
 
 ./qseed.py                               # load a quantum seed (optional)
-./tos.py type 'Urim;'; ./tos.py key ret  # consult
+./tos.py type 'Urim;'; ./tos.py key ret
+./tos.py shot                            # look at the screen
 ```
 
 `Urim` asks for a question, draws, prints the passage, asks for your reading,
 and appends the record. `UrimLog` prints the journal to the host console.
-`export.py` copies it out of the VM into `journal/`.
+
+The disk image is disposable and the container it runs in may not be, so get
+the journal out and commit it:
+
+```sh
+./export.py '::/Home/Urim.Journal.TXT' ../journal/Urim.Journal.TXT
+```
+
+To carry an existing journal into a fresh install, type it back in the same way
+sources go in: `Ed("::/Home/Urim.Journal.TXT")` then
+`./tos.py typefile ../journal/Urim.Journal.TXT` then `esc`.
 
 ## Layout
 
@@ -75,10 +99,22 @@ and appends the record. `UrimLog` prints the journal to the host console.
 | `holyc/BookTest.HC` | citation regression test |
 | `holyc/RdTest2.HC` | RDRAND carry-flag test |
 | `holyc/Peek2.HC` | maps the corpus boundaries |
-| `vm/tos.py` | headless driver: boot, screenshot, type, export |
+| `vm/install.sh` | unattended TempleOS install plus the HolyC sources |
+| `vm/test.sh` | checks citations and that the entropy source is live |
+| `vm/tos.py` | headless driver: boot, screenshot, type, wait-for-idle |
 | `vm/qseed.py` | fetches quantum entropy and loads it into the guest |
 | `vm/export.py` | copies a guest file to the host |
 | `journal/` | the record, exported from the VM |
+
+## License
+
+Public domain, via [the Unlicense](UNLICENSE). Terry released TempleOS into the
+public domain and its forks have kept it there; nothing here is more encumbered
+than what it was built on.
+
+Nothing in this repository redistributes TempleOS. `vm/setup.sh` fetches the
+ISO from templeos.org and checks it against the published MD5. The King James
+text is the Project Gutenberg edition already inside that ISO.
 
 ## Honest notes
 

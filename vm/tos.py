@@ -178,6 +178,58 @@ def type_file(path, delay=0.02):
     print(f"  typed {len(body.splitlines())} lines in {time.time()-t0:.0f}s")
 
 
+def _frame(ignore_top=16):
+    """Grab the framebuffer below the title bar as raw pixels."""
+    from PIL import Image
+    os.makedirs(SHOTS, exist_ok=True)
+    ppm = os.path.join(SHOTS, ".idle.ppm")
+    if os.path.exists(ppm):
+        os.remove(ppm)
+    monitor(f"screendump {ppm}", wait=1.0)
+    for _ in range(25):
+        if os.path.exists(ppm) and os.path.getsize(ppm) > 0:
+            break
+        time.sleep(0.3)
+    else:
+        return None
+    im = Image.open(ppm).convert("L")
+    im = im.crop((0, ignore_top, im.width, im.height))
+    data = im.tobytes()
+    os.remove(ppm)
+    return data
+
+
+def wait_idle(stable_for=8, timeout=900, tol=0.002):
+    """Block until the screen stops changing, i.e. TempleOS wants input.
+
+    Installing TempleOS means answering prompts separated by unpredictable
+    stretches of work -- partitioning and zeroing take minutes under TCG and
+    vary by host. Fixed sleeps either race or waste time, so watch the
+    framebuffer instead. The title bar carries a clock and an FPS counter so it
+    is cropped off, and the tolerance is wide enough to ignore a blinking
+    cursor but not a progress bar.
+    """
+    prev = None
+    steady = None
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        cur = _frame()
+        if cur is None:
+            time.sleep(2)
+            continue
+        if prev is not None and len(prev) == len(cur):
+            diff = sum(1 for a, b in zip(prev, cur) if a != b)
+            if diff / len(cur) <= tol:
+                steady = steady or time.time()
+                if time.time() - steady >= stable_for:
+                    return True
+            else:
+                steady = None
+        prev = cur
+        time.sleep(2)
+    return False
+
+
 def con_mark():
     """Remember how long console.log is now.
 
@@ -237,6 +289,10 @@ if __name__ == "__main__":
         type_text(args[0])
     elif verb == "typefile":
         type_file(args[0])
+    elif verb == "waitidle":
+        secs = float(args[0]) if args else 8
+        if not wait_idle(stable_for=secs):
+            sys.exit("timed out waiting for the screen to settle")
     elif verb == "mark":
         print(con_mark())
     elif verb == "con":

@@ -10,13 +10,21 @@ DISK="$HERE/templeos.qcow2"
 ISO_URL="https://templeos.org/Downloads/TempleOS.ISO"
 ISO_MD5="2facf5d7cfa08de4c47aede4a64cfb44"
 
+SUDO=""
+[ "$(id -u)" -eq 0 ] || SUDO="sudo"
+
 echo "==> host packages"
 if ! command -v qemu-system-x86_64 >/dev/null; then
   export DEBIAN_FRONTEND=noninteractive
-  apt-get update -qq
-  apt-get install -y -qq qemu-system-x86 qemu-utils
+  $SUDO apt-get update -qq
+  $SUDO apt-get install -y -qq qemu-system-x86 qemu-utils
 fi
-python3 -c "import PIL" 2>/dev/null || pip install -q pillow
+if ! python3 -c "import PIL" 2>/dev/null; then
+  # Debian marks the system interpreter externally-managed; this is a
+  # throwaway VM host, so installing into it is fine when there is no venv.
+  python3 -m pip install --quiet -r "$HERE/requirements.txt" 2>/dev/null ||
+    python3 -m pip install --quiet --break-system-packages -r "$HERE/requirements.txt"
+fi
 
 echo "==> iso"
 if [ ! -f "$ISO" ] || [ "$(md5sum "$ISO" | cut -d' ' -f1)" != "$ISO_MD5" ]; then
