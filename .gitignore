@@ -1,0 +1,7 @@
+# Rebuildable artifacts -- see vm/setup.sh
+vm/TempleOS.ISO
+vm/md5sums.txt
+vm/*.qcow2
+vm/monitor.sock
+vm/qemu.pid
+vm/shots/*.ppm
