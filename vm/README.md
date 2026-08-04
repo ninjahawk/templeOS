@@ -1,0 +1,67 @@
+# Headless TempleOS
+
+Stock TempleOS 5.03 running under QEMU with no display attached, driven
+entirely from a shell.
+
+## Rebuild it
+
+```sh
+./setup.sh          # host deps, ISO (checksummed), blank disk
+                    # then follow the printed install keystrokes once
+./tos.py boot       # subsequently: boot the installed system
+./tos.py key 1      # boot loader -> Drive C
+```
+
+## Drive it
+
+```sh
+./tos.py shot [name]      # framebuffer -> shots/<name>.png
+./tos.py key ret a f7     # send keys
+./tos.py type 'Dir;'      # type a literal string
+./tos.py cmd 'info block' # raw QEMU monitor command
+./tos.py stop
+```
+
+Screenshots go through the QEMU monitor's `screendump`, so nothing needs a
+display or a VNC client. Input goes in through `sendkey`.
+
+## What this machine can and can't do
+
+No `/dev/kvm` — the container is itself a VM and nested virtualisation isn't
+exposed, so QEMU runs on TCG software emulation. For TempleOS this barely
+matters: it boots in ~20s and holds ~29 FPS at 512 MB / 1 vCPU.
+
+Getting files **in** is straightforward: build a small ISO on the Linux side
+and attach it as a second CD-ROM.
+
+Getting files **out** is the hard direction. TempleOS can't see ext4, stock
+5.03 has no networking, and its own filesystem (RedSea) has no Linux driver.
+So reading work back out means parsing RedSea out of the qcow2 directly.
+
+## RedSea notes
+
+The ISO advertises ISO 9660 and `file` believes it, but the volume descriptor
+is malformed (the little- and big-endian root extents disagree) and real
+ISO 9660 readers reject it. Underneath it is RedSea.
+
+Directory entries are 64 bytes, and a directory's contents are just an array
+of them. Its first entry is the directory itself, the second is `..`:
+
+| offset | size | field |
+|---|---|---|
+| `0x00` | 1 | attributes — bit `0x10` means directory |
+| `0x01` | 1 | flags (`0x08` seen on dirs, `0x0c` on files) |
+| `0x02` | 38 | name, NUL-padded ASCII |
+| `0x28` | 8 | starting cluster |
+| `0x30` | 8 | size in bytes |
+| `0x38` | 8 | date/time |
+
+Clusters are 512 bytes and are absolute — byte offset is `cluster * 512`.
+Confirmed against `/Adam/God`, whose entry gives cluster `0x612a`, and
+`0x612a * 512 = 0xc25400`, exactly where its own entry array begins.
+
+Most shipped files end in `.Z` and are compressed with Terry's own codec.
+Header is `<i64 compressed_size><i64 expanded_size><u8 type>` followed by the
+stream; `type` 2 is what the `.HC.Z` sources use. The stream is **not**
+standard bit-packed LZW — literals stay byte-aligned and readable, so codes
+are not 9-bit packed. Decoding it is still open.
