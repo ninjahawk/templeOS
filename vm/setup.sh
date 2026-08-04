@@ -44,4 +44,18 @@ Done. TempleOS installs itself interactively, so finish it by hand:
   ./tos.py key 1               boot loader -> Drive C
 
 From then on `./tos.py boot` brings the installed system straight up.
+
+To install the oracle, type each HolyC source into the guest once:
+
+  ./tos.py type 'Ed("::/Home/U.HC");';    ./tos.py key ret
+  ./tos.py typefile ../holyc/U.HC;        ./tos.py key esc
+  ./tos.py type 'Ed("::/Home/Urim.HC");'; ./tos.py key ret
+  ./tos.py typefile ../holyc/Urim.HC;     ./tos.py key esc
+
+Then per session:
+
+  ./tos.py type '#include "::/Home/U"';    ./tos.py key ret
+  ./tos.py type '#include "::/Home/Urim"'; ./tos.py key ret
+  ./qseed.py                                  # optional quantum seed
+  ./tos.py type 'Urim;'; ./tos.py key ret
 EOF

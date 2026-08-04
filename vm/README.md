@@ -18,9 +18,17 @@ entirely from a shell.
 ./tos.py shot [name]      # framebuffer -> shots/<name>.png
 ./tos.py key ret a f7     # send keys
 ./tos.py type 'Dir;'      # type a literal string
+./tos.py typefile x.HC    # type a whole source file into an open editor
+./tos.py mark             # remember the current console.log length
+./tos.py con              # print console output since the mark
 ./tos.py cmd 'info block' # raw QEMU monitor command
 ./tos.py stop
 ```
+
+The CPU model is `max` rather than `qemu64`, which exposes `RDRAND` and
+`RDSEED`. TCG implements both, backed by the host entropy pool. Terry's
+assembler predates `RDRAND` by nine years, so `Urim.HC` emits the opcode as
+raw bytes (`DU8 0x48,0x0F,0xC7,0xF0`).
 
 Screenshots go through the QEMU monitor's `screendump`, so nothing needs a
 display or a VNC client. Input goes in through `sendkey`.
@@ -31,12 +39,20 @@ No `/dev/kvm` — the container is itself a VM and nested virtualisation isn't
 exposed, so QEMU runs on TCG software emulation. For TempleOS this barely
 matters: it boots in ~20s and holds ~29 FPS at 512 MB / 1 vCPU.
 
-Getting files **in** is straightforward: build a small ISO on the Linux side
-and attach it as a second CD-ROM.
+Getting files **in**: `./tos.py typefile <path>` types a source file into an
+open `Ed()` window over the QEMU monitor. About 2.5 lines a second, and
+verified by dumping the file back out and diffing.
 
-Getting files **out** is the hard direction. TempleOS can't see ext4, stock
-5.03 has no networking, and its own filesystem (RedSea) has no Linux driver.
-So reading work back out means parsing RedSea out of the qcow2 directly.
+Getting files **out** looked like the hard direction — TempleOS can't see ext4,
+stock 5.03 has no networking, and RedSea has no Linux driver. The way through
+is QEMU's debug console: `-debugcon file:console.log` captures every byte
+written to I/O port `0xE9`, and TempleOS has `OutU8`. `holyc/U.HC` wraps that
+into `UDump`, and `export.py` drives it to copy a guest file to the host.
+
+Note: never truncate `console.log` while QEMU is running. QEMU keeps its own
+write offset on that descriptor, so emptying the file leaves a sparse hole and
+the next output shows up after a wall of NULs. Use `./tos.py mark` to record an
+offset and `./tos.py con` to read forward from it.
 
 ## RedSea notes
 

@@ -5,3 +5,6 @@ vm/*.qcow2
 vm/monitor.sock
 vm/qemu.pid
 vm/shots/*.ppm
+vm/console.log
+vm/console.log.off
+vm/__pycache__/

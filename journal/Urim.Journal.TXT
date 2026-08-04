@@ -1,0 +1,78 @@
+================================================================
+CONSULTATION 1
+WHEN      08/04/26 11:10:26
+QUESTION  Is this instrument built rightly
+ENTROPY   rdrand
+DRAW      77FE67CDA3D363A7
+OFFSET    2747632 of 4345020
+PASSAGE   The Book of the Prophet Jeremiah 23:35
+23:35 Thus shall ye say every one to his neighbour, and every one to
+his brother, What hath the LORD answered? and, What hath the LORD
+spoken?  23:36 And the burden of the LORD shall ye mention no more:
+for every man's word shall be his burden; for ye have perverted the
+words of the living God, of the LORD of hosts our God.
+
+23:37 Thus shalt thou say to the prophet, What hath the LORD answered
+thee? and, What hath the LORD spoken?  23:38 But since ye say, The
+burden of the LORD; therefore thus saith the LORD; Because ye say this
+word, The burden of the LORD, and I have sent unto you, saying, Ye
+shall not say, The burden of the LORD; 23:39 Therefore, behold, I,
+even I, will utterly forget you, and I will forsake you, and the city
+that I gave you and your fathers, and cast you out of my presence:
+23:40 And I will bring an everlasting reproach upon you, and a
+perpetual shame, which shall not be forgotten.
+
+24:1 The LORD shewed me, and, behold, two baskets of figs were set
+before the temple of the LORD, after that Nebuchadrezzar king of
+Babylon had carried away captive Jeconiah the son of Jehoiakim king of
+Judah, and the princes of Judah, with the carpenters and smiths, from
+Jerusalem, and had brought them to Babylon.
+READING   A caution against presuming to speak for God. Taken as a rule for this instrument: report the draw, never claim the sender.
+OUTCOME   
+================================================================
+
+================================================================
+CONSULTATION 2
+WHEN      08/04/26 11:21:12
+QUESTION  What should this temple be used for
+ENTROPY   rdrand ^ anu-qrng(quantum-vacuum)
+DRAW      8C5DC69EB58FA38B
+OFFSET    1134990 of 4345020
+PASSAGE   The First Book of the Kings 14:10
+14:10 But if they say thus, Come up unto us; then we will go up: for
+the LORD hath delivered them into our hand: and this shall be a sign
+unto us.
+
+14:11 And both of them discovered themselves unto the garrison of the
+Philistines: and the Philistines said, Behold, the Hebrews come forth
+out of the holes where they had hid themselves.
+
+14:12 And the men of the garrison answered Jonathan and his
+armourbearer, and said, Come up to us, and we will shew you a thing.
+And Jonathan said unto his armourbearer, Come up after me: for the
+LORD hath delivered them into the hand of Israel.
+READING   Drawn on Jonathan going up against the garrison on a sign. Noting also that this draw exposed a citation bug: the book heading is truncated.
+OUTCOME   
+================================================================
+
+================================================================
+CONSULTATION 3
+WHEN      08/04/26 11:29:51
+QUESTION  What is required of the one who keeps this record
+ENTROPY   rdrand ^ anu-qrng(quantum-vacuum)
+DRAW      EFBD0DDB970797D0
+OFFSET    357409 of 4345020
+PASSAGE   The Second Book of Moses:  Called Exodus 32:30
+32:30 And it came to pass on the morrow, that Moses said unto the
+people, Ye have sinned a great sin: and now I will go up unto the
+LORD; peradventure I shall make an atonement for your sin.
+
+32:31 And Moses returned unto the LORD, and said, Oh, this people have
+sinned a great sin, and have made them gods of gold.
+
+32:32 Yet now, if thou wilt forgive their sin--; and if not, blot me,
+I pray thee, out of thy book which thou hast written.
+READING   Drawn on Moses interceding and offering to be blotted out of the book. Read as: the keeper of a record is answerable to it, not exempt from it.
+OUTCOME   
+================================================================
+

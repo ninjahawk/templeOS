@@ -24,6 +24,7 @@ PID = os.path.join(HERE, "qemu.pid")
 ISO = os.path.join(HERE, "TempleOS.ISO")
 DISK = os.path.join(HERE, "templeos.qcow2")
 SHOTS = os.path.join(HERE, "shots")
+CONSOLE = os.path.join(HERE, "console.log")
 
 # QEMU keynames for characters that aren't just their own literal name.
 SHIFTED = {
@@ -68,7 +69,7 @@ def monitor(cmd, wait=0.35):
     return out.decode(errors="replace")
 
 
-def start(from_disk=False, attach_disk=True, memory=512):
+def start(from_disk=False, attach_disk=True, memory=1024):
     stop(quiet=True)
     for stale in (SOCK, PID):
         if os.path.exists(stale):
@@ -78,13 +79,20 @@ def start(from_disk=False, attach_disk=True, memory=512):
         "-accel", "tcg",                    # no /dev/kvm in this container
         "-m", str(memory),
         "-smp", "1",
-        "-cpu", "qemu64",
+        # 'max' exposes RDRAND/RDSEED, which TCG backs with the host entropy
+        # pool. Terry only ever had a PRNG; the oracle needs a real one.
+        "-cpu", "max",
         "-machine", "pc",
         "-vga", "std",
         "-display", "none",
         "-rtc", "base=localtime",
         "-monitor", f"unix:{SOCK},server,nowait",
         "-pidfile", PID,
+        # Bytes written to port 0xE9 land in this file. TempleOS has no serial
+        # driver, but it does have OutU8, so this is a usable text channel out
+        # of the guest -- the only one, given it can't write ext4 and Linux
+        # can't read RedSea.
+        "-debugcon", f"file:{CONSOLE}",
     ]
     if attach_disk and os.path.exists(DISK):
         cmd += ["-drive", f"file={DISK},format=qcow2,if=ide,index=0,media=disk"]
@@ -119,22 +127,79 @@ def shot(name="screen"):
     print(png)
 
 
+HOLD_MS = 1  # sendkey's default 100ms hold made typing a file take minutes
+
+
+def _blast(cmds, delay=0.02):
+    """Push many monitor commands down one connection without reading back.
+
+    Reopening a socket and waiting on a read timeout per keystroke made typing
+    a source file take minutes; this keeps it to roughly `delay` per key.
+    """
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.settimeout(15)
+    s.connect(SOCK)
+    time.sleep(0.2)
+    for c in cmds:
+        s.sendall((c + "\n").encode())
+        time.sleep(delay)
+    time.sleep(0.3)
+    s.close()
+
+
+def keyname(ch):
+    if ch in SHIFTED:
+        return SHIFTED[ch]
+    if ch in PLAIN:
+        return PLAIN[ch]
+    if ch.isupper():
+        return "shift-" + ch.lower()
+    return ch
+
+
 def send_keys(keys, delay=0.06):
-    for k in keys:
-        monitor(f"sendkey {k}", wait=delay)
+    _blast([f"sendkey {k} {HOLD_MS}" for k in keys], delay)
 
 
-def type_text(text, delay=0.06):
-    for ch in text:
-        if ch in SHIFTED:
-            k = SHIFTED[ch]
-        elif ch in PLAIN:
-            k = PLAIN[ch]
-        elif ch.isupper():
-            k = "shift-" + ch.lower()
-        else:
-            k = ch
-        monitor(f"sendkey {k}", wait=delay)
+def type_text(text, delay=0.02):
+    _blast([f"sendkey {keyname(c)} {HOLD_MS}" for c in text], delay)
+
+
+def type_file(path, delay=0.02):
+    """Type a whole file into the editor over a single monitor connection."""
+    with open(path) as f:
+        body = f.read()
+    cmds = []
+    for line in body.split("\n"):
+        cmds += [f"sendkey {keyname(c)} {HOLD_MS}" for c in line]
+        cmds.append(f"sendkey ret {HOLD_MS}")
+    t0 = time.time()
+    _blast(cmds, delay)
+    print(f"  typed {len(body.splitlines())} lines in {time.time()-t0:.0f}s")
+
+
+def con_mark():
+    """Remember how long console.log is now.
+
+    Never truncate it: QEMU keeps its own write offset on that fd, so emptying
+    the file just leaves a sparse hole and the next output appears after a wall
+    of NULs. Marking an offset and reading forward is the safe equivalent.
+    """
+    n = os.path.getsize(CONSOLE) if os.path.exists(CONSOLE) else 0
+    with open(CONSOLE + ".off", "w") as f:
+        f.write(str(n))
+    return n
+
+
+def con_read():
+    off = 0
+    if os.path.exists(CONSOLE + ".off"):
+        off = int(open(CONSOLE + ".off").read().strip() or 0)
+    if not os.path.exists(CONSOLE):
+        return ""
+    with open(CONSOLE, "rb") as f:
+        f.seek(off)
+        return f.read().decode(errors="replace")
 
 
 def stop(quiet=False):
@@ -170,6 +235,12 @@ if __name__ == "__main__":
         send_keys(args)
     elif verb == "type":
         type_text(args[0])
+    elif verb == "typefile":
+        type_file(args[0])
+    elif verb == "mark":
+        print(con_mark())
+    elif verb == "con":
+        sys.stdout.write(con_read())
     elif verb == "cmd":
         print(monitor(args[0], wait=1.0))
     elif verb == "stop":
