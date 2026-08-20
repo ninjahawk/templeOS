@@ -8,3 +8,6 @@ monitor.sock
 qemu.log
 nohup.out
 __pycache__/
+
+# ...but keep the curated docs screenshots
+!docs/screenshots/*.png

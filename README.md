@@ -83,3 +83,28 @@ and are deliberately kept out of the repo — see `.gitignore`.
 - **`-vga std`.** TempleOS drives plain VGA at 640×480.
 - Beware `pkill -f qemu-system-x86_64`: the pattern matches the invoking shell's
   own command line and kills it. Use `pkill -x qemu-system-x86_64` instead.
+
+## Verified state
+
+Screenshots in `docs/screenshots/` record a working run:
+
+| | |
+| --- | --- |
+| `01-livecd-holyc.png` | live CD, HolyC session: `"Hello from HolyC!\n";` and `Dir;` |
+| `02-installing.png` | installer copying the system to `C:` |
+| `03-boot-loader.png` | TempleOS boot loader in the MBR after install |
+| `04-installed-persistent.png` | booted from disk; a directory created before a full host restart still present |
+
+Measured on 4 cores with no KVM: ~30 s to the desktop, ~2 min for the install.
+
+## Persisting work
+
+The qcow2 is **not** committed — it is ~70 MB, grows with use, and `setup.sh`
+plus `install.sh` rebuild it in a couple of minutes. On an ephemeral host the
+disk image dies with the machine.
+
+So anything worth keeping lives in this repo as text and gets injected into the
+VM, not authored inside it and left there. TempleOS has no networking in this
+setup and uses its own RedSea filesystem, so the transfer path is either
+mounting the image from the host or building a small ISO and attaching it as a
+second CD.
