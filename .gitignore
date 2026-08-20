@@ -1,0 +1,10 @@
+# VM artifacts: large, regenerable, machine-specific
+*.qcow2
+*.ISO
+*.iso
+*.ppm
+*.png
+monitor.sock
+qemu.log
+nohup.out
+__pycache__/
