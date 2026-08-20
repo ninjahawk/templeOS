@@ -27,7 +27,8 @@ Yes. Measured, not estimated — all numbers below come from this container.
 - Runs happily **alongside the TempleOS VM** (QEMU sits at ~167 MB RSS). The two
   together use well under a fifth of available RAM.
 
-Reproduce with `oracle/setup.sh` then `oracle/bench.sh`.
+Reproduce with `oracle/setup.sh` then `oracle/bench.sh`. For the full size
+ladder and the memory ceiling, see [model-ceiling.md](model-ceiling.md).
 
 ## Quality caveat
 
