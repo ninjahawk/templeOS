@@ -11,3 +11,8 @@ __pycache__/
 
 # ...but keep the curated docs screenshots
 !docs/screenshots/*.png
+
+# local model weights
+*.gguf
+*.safetensors
+oracle/llama.cpp/
